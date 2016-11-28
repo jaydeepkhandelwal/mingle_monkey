@@ -1,0 +1,71 @@
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xmlns:context="http://www.springframework.org/schema/context"
+       xmlns:tx="http://www.springframework.org/schema/tx"
+       xsi:schemaLocation="
+		http://www.springframework.org/schema/beans
+		http://www.springframework.org/schema/beans/spring-beans.xsd
+
+		http://www.springframework.org/schema/tx
+		http://www.springframework.org/schema/tx/spring-tx.xsd
+
+		http://www.springframework.org/schema/context
+		http://www.springframework.org/schema/context/spring-context.xsd">
+
+
+    <context:component-scan base-package="com.jarvis.quiz.model.entity.*"/>
+    <context:annotation-config/>
+
+    <!-- *********** Read Configuration from yaml *********** -->
+
+    <bean id="propertyConfigurer" class="org.springframework.beans.factory.config.PropertyPlaceholderConfigurer">
+        <property name="locations">
+            <value>config.yml</value>
+        </property>
+        <property name="propertiesPersister" ref="persister"/>
+    </bean>
+
+    <bean id="persister" class="cf.spring.YamlPropertiesPersister"/>
+
+    <!-- ************ JPA configuration *********** -->
+
+    <tx:annotation-driven transaction-manager="transactionManager"/>
+
+    <bean id="transactionManager" class="org.springframework.orm.jpa.JpaTransactionManager">
+        <property name="entityManagerFactory" ref="entityManagerFactory"/>
+    </bean>
+
+    <bean id="entityManagerFactory" class="org.springframework.orm.jpa.LocalContainerEntityManagerFactoryBean">
+        <property name="persistenceXmlLocation" value="classpath:persistence.xml"/>
+        <property name="persistenceUnitName" value="transDetail"/>
+        <property name="dataSource" ref="dataSource"/>
+        <property name="jpaPropertyMap">
+            <props>
+                <!--prop key="hibernate.hbm2ddl.auto">create</prop-->
+                <prop key="hibernate.ejb.naming_strategy">org.hibernate.cfg.ImprovedNamingStrategy</prop>
+                <!--prop key="hibernate.show_sql">true</prop-->
+                <prop key="hibernate.format_sql">true</prop>
+                <prop key="hibernate.dialect">${dbConfig.properties.hibernate.dialect}</prop>
+                <prop key="hibernate.connection.release_mode">AFTER_TRANSACTION</prop>
+            </props>
+        </property>
+
+    </bean>
+
+    <bean id="dataSource" class="com.mchange.v2.c3p0.ComboPooledDataSource" destroy-method="close">
+        <property name="driverClass" value="${dbConfig.driverClass}"/>
+        <property name="jdbcUrl" value="${dbConfig.url}"/>
+        <property name="user" value="${dbConfig.user}"/>
+        <property name="password" value="${dbConfig.password}"/>
+        <property name="acquireIncrement" value="${dbConfig.properties.c3p0.acquireIncrement}"/>
+        <property name="initialPoolSize" value="${dbConfig.properties.c3p0.initialPoolSize}"/>
+        <property name="minPoolSize" value="${dbConfig.properties.c3p0.minPoolSize}"/>
+        <property name="maxPoolSize" value="${dbConfig.properties.c3p0.maxPoolSize}"/>
+        <property name="maxIdleTime" value="${dbConfig.properties.c3p0.maxIdleTime}"/>
+        <property name="maxStatements" value="${dbConfig.properties.c3p0.maxStatements}"/>
+        <property name="idleConnectionTestPeriod" value="${dbConfig.properties.c3p0.idleConnectionTestPeriod}"/>
+        <property name="preferredTestQuery" value="SELECT 1"/>
+    </bean>
+
+    <bean id="eventBus" class="com.google.common.eventbus.EventBus"/>
+</beans>
